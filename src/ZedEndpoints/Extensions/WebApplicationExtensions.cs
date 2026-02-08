@@ -1,0 +1,73 @@
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Builder;
+using ZedEndpoints.Abstractions;
+
+namespace ZedEndpoints.Extensions;
+
+/// <summary>
+/// Provides extension methods for <see cref="WebApplication"/> to enable automatic endpoint discovery.
+/// </summary>
+public static class WebApplicationExtensions
+{
+    private static readonly ConditionalWeakTable<WebApplication, HashSet<Assembly>> ProcessedAssembliesPerApp = new();
+
+    /// <summary>
+    /// Automatically discovers and registers all endpoint groups in the application.
+    /// </summary>
+    /// <param name="app">The web application to register endpoint groups with.</param>
+    /// <param name="assembly">
+    /// Optional assembly to scan for endpoint groups. 
+    /// If null, uses the entry assembly of the application.
+    /// </param>
+    /// <returns>
+    /// The same <see cref="WebApplication"/> instance for method chaining.
+    /// </returns>
+    /// <remarks>
+    /// This method scans the specified assembly (or the entry assembly if not provided) 
+    /// for all concrete classes that implement <see cref="IEndpointGroup"/>, creates instances 
+    /// of them, and invokes their <see cref="IEndpointGroup.MapGroup"/> methods to register endpoints.
+    /// <para>
+    /// Abstract classes and interfaces are automatically excluded from discovery.
+    /// </para>
+    /// <para>
+    /// This method should be called once during application startup, typically in Program.cs:
+    /// <code>
+    /// var app = builder.Build();
+    /// app.MapEndpointGroups();  // Auto-discovers endpoint groups from entry assembly
+    /// // or
+    /// app.MapEndpointGroups(typeof(MyEndpointGroup).Assembly);  // Scan specific assembly
+    /// app.Run();
+    /// </code>
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the entry assembly cannot be determined when <paramref name="assembly"/> is null,
+    /// or if an endpoint group cannot be instantiated (e.g., missing parameterless constructor).
+    /// </exception>
+    public static WebApplication MapEndpointGroups(
+        this WebApplication app,
+        Assembly? assembly = null)
+    {
+        assembly ??= Assembly.GetEntryAssembly() ?? throw new InvalidOperationException(
+            "Unable to determine the entry assembly. Ensure this method is called from the application's main entry point.");
+
+        var processedAssemblies = ProcessedAssembliesPerApp.GetOrCreateValue(app);
+        lock (processedAssemblies)
+        {
+            if (!processedAssemblies.Add(assembly)) return app;
+        }
+
+        var groupTypes = assembly
+            .GetTypes()
+            .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsAssignableTo(typeof(IEndpointGroup)));
+
+        foreach (var groupType in groupTypes)
+        {
+            var instance = Activator.CreateInstance(groupType) as IEndpointGroup;
+            instance?.MapGroup(app);
+        }
+
+        return app;
+    }
+}

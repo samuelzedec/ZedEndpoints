@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ZedEndpoints/ZedEndpoints.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ZedEndpoints.Tests/ZedEndpoints.Tests.csproj" />
+  </Folder>
+</Solution>
