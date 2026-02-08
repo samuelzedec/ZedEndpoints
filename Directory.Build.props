@@ -11,7 +11,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 
     <PackageId>ZedEndpoints</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Samuel Zedec</Authors>
     <Company>Samuel Zedec</Company>
     <Product>ZedEndpoints</Product>
@@ -22,6 +22,7 @@
     <PackageProjectUrl>https://github.com/samuelzedec/ZedEndpoints</PackageProjectUrl>
     <RepositoryUrl>https://github.com/samuelzedec/ZedEndpoints</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 
     <PackageTags>aspnetcore;minimal-apis;endpoints;vertical-slice;dotnet;csharp;webapi</PackageTags>
@@ -35,13 +36,13 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <None Include="../../README.md" Pack="true" PackagePath="/"/>
     <None Include="../../icon.png" Pack="true" PackagePath="/"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
     <FrameworkReference Include="Microsoft.AspNetCore.App"/>
   </ItemGroup>
 </Project>

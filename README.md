@@ -1,5 +1,8 @@
 # ZedEndpoints
 
+[![NuGet](https://img.shields.io/nuget/v/ZedEndpoints.svg)](https://www.nuget.org/packages/ZedEndpoints/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/ZedEndpoints.svg)](https://www.nuget.org/packages/ZedEndpoints/)
+
 A minimal library for automatic endpoint discovery and organization in ASP.NET Core Minimal APIs.
 
 ## Features
