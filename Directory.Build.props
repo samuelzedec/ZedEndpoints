@@ -6,42 +6,6 @@
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(IsPackable)' == 'true'">
-    <IsPackable>true</IsPackable>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-
-    <PackageId>ZedEndpoints</PackageId>
-    <Version>1.0.1</Version>
-    <Authors>Samuel Zedec</Authors>
-    <Company>Samuel Zedec</Company>
-    <Product>ZedEndpoints</Product>
-    <Description>Organize Minimal APIs with zero dependencies and maximum flexibility. Auto-discover endpoints, group them by feature, and keep your code clean.</Description>
-    <Copyright>Copyright © 2026 Samuel Zedec</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-
-    <PackageProjectUrl>https://github.com/samuelzedec/ZedEndpoints</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/samuelzedec/ZedEndpoints</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-    <PackageIcon>icon.png</PackageIcon>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-
-    <PackageTags>aspnetcore;minimal-apis;endpoints;vertical-slice;dotnet;csharp;webapi</PackageTags>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);1591</NoWarn>
-
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-  </PropertyGroup>
-
-  <ItemGroup Condition="'$(IsPackable)' == 'true'">
-    <None Include="../../README.md" Pack="true" PackagePath="/"/>
-    <None Include="../../icon.png" Pack="true" PackagePath="/"/>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"/>
-  </ItemGroup>
-
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App"/>
   </ItemGroup>
