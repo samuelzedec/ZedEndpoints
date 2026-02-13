@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Routing;
+using ZedEndpoints.Extensions;
 
 namespace ZedEndpoints.Abstractions;
 
