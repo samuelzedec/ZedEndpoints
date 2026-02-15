@@ -9,6 +9,8 @@ A minimal library for automatic endpoint discovery and organization in ASP.NET C
 
 - Automatic endpoint discovery via reflection
 - Group-based endpoint organization with shared configuration
+- Optional global route prefix for all endpoint groups
+- Per-group prefix override via `[NoGlobalPrefix]` attribute
 - Type-safe interfaces and generics
 - Fluent API with method chaining support
 - Idempotent operations (safe to call multiple times)
@@ -52,7 +54,7 @@ public class ProductEndpoints : IEndpointGroup
 {
     public void MapGroup(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/products")
+        var group = app.MapGroup("/products")
             .WithTags("Products")
             .RequireAuthorization();
 
@@ -101,6 +103,36 @@ apiV1.MapEndpoint<GetProductEndpoint>();
 app.MapEndpointGroups(typeof(ProductEndpoints).Assembly);
 ```
 
+### Global Route Prefix
+Apply a common prefix to all discovered endpoint groups at once:
+```csharp
+// All routes will be prefixed with /api/v1
+app.MapEndpointGroups(globalPrefix: "api/v1");
+
+// Combined with a specific assembly
+app.MapEndpointGroups(typeof(ProductEndpoints).Assembly, globalPrefix: "api/v1");
+```
+
+This is useful for applying a consistent API versioning prefix without modifying each group individually. For example, a group that maps `/products` will automatically become `/api/v1/products`.
+
+### Opting Out of the Global Prefix
+Use the `[NoGlobalPrefix]` attribute on a group to bypass the global prefix:
+```csharp
+using ZedEndpoints.Attributes;
+
+[NoGlobalPrefix]
+public class HealthEndpoints : IEndpointGroup
+{
+    public void MapGroup(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/health", () => Results.Ok())
+            .WithName("HealthCheck");
+    }
+}
+```
+
+With a global prefix of `api/v1`, all other groups will be prefixed normally while `HealthEndpoints` will remain at `/health`.
+
 ## Architecture
 
 ### IEndpoint Interface
@@ -121,6 +153,14 @@ public interface IEndpointGroup
 {
     void MapGroup(IEndpointRouteBuilder app);
 }
+```
+
+### NoGlobalPrefix Attribute
+
+Marks an endpoint group to be excluded from the global route prefix.
+```csharp
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public sealed class NoGlobalPrefixAttribute : Attribute;
 ```
 
 ## Best Practices
@@ -153,7 +193,7 @@ public class ProductEndpoints : IEndpointGroup
 {
     public void MapGroup(IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/v1/products")
+        var group = app.MapGroup("/products")
             .WithTags("Products")
             .RequireAuthorization()
             .RequireRateLimiting("fixed")
@@ -165,6 +205,23 @@ public class ProductEndpoints : IEndpointGroup
 }
 ```
 
+### API Versioning with Global Prefix
+
+Use the global prefix for versioning instead of repeating it in every group:
+```csharp
+// Instead of hardcoding /api/v1 in every IEndpointGroup
+app.MapEndpointGroups(globalPrefix: "api/v1");
+```
+
+For groups that should not follow the versioning scheme, such as health checks or webhooks, use `[NoGlobalPrefix]`:
+```csharp
+[NoGlobalPrefix]
+public class HealthEndpoints : IEndpointGroup { ... }
+
+[NoGlobalPrefix]
+public class WebhookEndpoints : IEndpointGroup { ... }
+```
+
 ## How It Works
 
 ### Automatic Discovery
@@ -174,7 +231,12 @@ The `MapEndpointGroups()` extension method:
 1. Scans the specified assembly (or entry assembly by default)
 2. Finds all concrete classes implementing `IEndpointGroup`
 3. Creates instances using parameterless constructors
-4. Invokes their `MapGroup()` methods
+4. Checks for the `[NoGlobalPrefix]` attribute on each group
+5. Invokes their `MapGroup()` methods with the appropriate route builder
+
+### Global Prefix
+
+When a `globalPrefix` is provided, a root `RouteGroupBuilder` is created and passed to all endpoint groups instead of the `WebApplication` directly. Both implement `IEndpointRouteBuilder`, so existing group implementations require no changes. Groups decorated with `[NoGlobalPrefix]` always receive the `WebApplication` directly, bypassing the prefix entirely.
 
 ### Idempotency
 

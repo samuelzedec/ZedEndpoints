@@ -1,7 +1,9 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using ZedEndpoints.Abstractions;
+using ZedEndpoints.Attributes;
 
 namespace ZedEndpoints.Extensions;
 
@@ -20,6 +22,11 @@ public static class WebApplicationExtensions
     /// Optional assembly to scan for endpoint groups. 
     /// If null, uses the entry assembly of the application.
     /// </param>
+    /// <param name="globalPrefix">
+    /// Optional global route prefix to prepend to all endpoint groups.
+    /// For example, passing <c>"api/v1"</c> will prefix all routes with <c>/api/v1</c>.
+    /// If null, no prefix is applied.
+    /// </param>
     /// <returns>
     /// The same <see cref="WebApplication"/> instance for method chaining.
     /// </returns>
@@ -36,7 +43,9 @@ public static class WebApplicationExtensions
     /// var app = builder.Build();
     /// app.MapEndpointGroups();  // Auto-discovers endpoint groups from entry assembly
     /// // or
-    /// app.MapEndpointGroups(typeof(MyEndpointGroup).Assembly);  // Scan specific assembly
+    /// app.MapEndpointGroups("api/v1");  // All routes prefixed with /api/v1
+    /// // or
+    /// app.MapEndpointGroups("api/v1", typeof(MyEndpointGroup).Assembly);  // Prefix + specific assembly
     /// app.Run();
     /// </code>
     /// </para>
@@ -47,7 +56,8 @@ public static class WebApplicationExtensions
     /// </exception>
     public static WebApplication MapEndpointGroups(
         this WebApplication app,
-        Assembly? assembly = null)
+        Assembly? assembly = null,
+        string? globalPrefix = null)
     {
         assembly ??= Assembly.GetEntryAssembly() ?? throw new InvalidOperationException(
             "Unable to determine the entry assembly. Ensure this method is called from the application's main entry point.");
@@ -62,10 +72,17 @@ public static class WebApplicationExtensions
             .GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false } && t.IsAssignableTo(typeof(IEndpointGroup)));
 
+        IEndpointRouteBuilder builder = globalPrefix is not null
+            ? app.MapGroup(globalPrefix)
+            : app;
+
         foreach (var groupType in groupTypes)
         {
             var instance = Activator.CreateInstance(groupType) as IEndpointGroup;
-            instance?.MapGroup(app);
+            var hasNoPrefix = groupType.IsDefined(typeof(NoGlobalPrefixAttribute), inherit: false);
+
+            var targetBuilder = hasNoPrefix ? app : builder;
+            instance?.MapGroup(targetBuilder);
         }
 
         return app;
