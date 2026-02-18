@@ -251,6 +251,17 @@ This is achieved through assembly tracking:
 - Thread-safe using lock mechanism
 - Prevents accidental duplicate endpoint registration
 
+### Integration Testing with WebApplicationFactory
+
+When using `WebApplicationFactory<T>` for integration or acceptance tests, the default assembly resolution via `Assembly.GetEntryAssembly()` may return the test runner assembly instead of your application assembly. This means no endpoints will be discovered.
+
+**This is handled automatically since v1.1.1** — the library now uses `app.Environment.ApplicationName` to resolve the correct assembly, which works seamlessly with `WebApplicationFactory`.
+
+If you're on an older version, pass the assembly explicitly:
+```csharp
+app.MapEndpointGroups(typeof(Program).Assembly, globalPrefix: "api/v1");
+```
+
 ## Requirements
 
 - .NET 8.0 or higher

@@ -59,8 +59,7 @@ public static class WebApplicationExtensions
         Assembly? assembly = null,
         string? globalPrefix = null)
     {
-        assembly ??= Assembly.GetEntryAssembly() ?? throw new InvalidOperationException(
-            "Unable to determine the entry assembly. Ensure this method is called from the application's main entry point.");
+        assembly ??= Assembly.Load(app.Environment.ApplicationName);
 
         var processedAssemblies = ProcessedAssembliesPerApp.GetOrCreateValue(app);
         lock (processedAssemblies)
