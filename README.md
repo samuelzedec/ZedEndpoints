@@ -5,6 +5,24 @@
 
 A minimal library for automatic endpoint discovery and organization in ASP.NET Core Minimal APIs.
 
+## Why ZedEndpoints
+
+Carter and similar libraries rely on reflection-based discovery that requires
+public classes. This prevents using C#'s `file` and `internal` modifiers,
+which are essential for proper encapsulation in feature-based architectures.
+
+ZedEndpoints solves this by combining explicit registration within groups
+and automatic group discovery — giving you encapsulation without sacrificing
+convenience.
+
+```
+// Carter — requires public
+public sealed class CreateUserEndpoint : ICarterModule { ... }
+
+// ZedEndpoints — file modifier works
+file sealed class CreateUserEndpoint : IEndpoint { ... }
+```
+
 ## Features
 
 - Automatic endpoint discovery via reflection
