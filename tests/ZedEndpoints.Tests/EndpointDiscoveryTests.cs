@@ -18,7 +18,7 @@ public sealed class EndpointDiscoveryTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -51,7 +51,7 @@ public sealed class EndpointDiscoveryTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -74,7 +74,7 @@ public sealed class EndpointDiscoveryTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -97,7 +97,7 @@ public sealed class EndpointDiscoveryTests
         var app = builder.Build();
 
         // Act
-        var result = app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        var result = app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
 
         // Assert
         result.Should().BeSameAs(app, "method should support method chaining");
@@ -111,7 +111,7 @@ public sealed class EndpointDiscoveryTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -144,7 +144,7 @@ public sealed class EndpointDiscoveryTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try

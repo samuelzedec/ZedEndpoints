@@ -18,14 +18,14 @@ public static class WebApplicationExtensions
     /// Automatically discovers and registers all endpoint groups in the application.
     /// </summary>
     /// <param name="app">The web application to register endpoint groups with.</param>
-    /// <param name="assembly">
-    /// Optional assembly to scan for endpoint groups. 
-    /// If null, uses the entry assembly of the application.
-    /// </param>
     /// <param name="globalPrefix">
     /// Optional global route prefix to prepend to all endpoint groups.
     /// For example, passing <c>"api/v1"</c> will prefix all routes with <c>/api/v1</c>.
     /// If null, no prefix is applied.
+    /// </param>
+    /// <param name="assembly">
+    /// Optional assembly to scan for endpoint groups. 
+    /// If null, uses the entry assembly of the application.
     /// </param>
     /// <returns>
     /// The same <see cref="WebApplication"/> instance for method chaining.
@@ -56,8 +56,8 @@ public static class WebApplicationExtensions
     /// </exception>
     public static WebApplication MapEndpointGroups(
         this WebApplication app,
-        Assembly? assembly = null,
-        string? globalPrefix = null)
+        string? globalPrefix = null,
+        Assembly? assembly = null)
     {
         assembly ??= Assembly.Load(app.Environment.ApplicationName);
 
@@ -77,11 +77,15 @@ public static class WebApplicationExtensions
 
         foreach (var groupType in groupTypes)
         {
-            var instance = Activator.CreateInstance(groupType) as IEndpointGroup;
+            var instance = Activator.CreateInstance(groupType) as IEndpointGroup
+                ?? throw new InvalidOperationException(
+                    $"Could not create an instance of '{groupType.Name}'. " +
+                    $"Ensure it has a public parameterless constructor.");
+
             var hasNoPrefix = groupType.IsDefined(typeof(NoGlobalPrefixAttribute), inherit: false);
 
             var targetBuilder = hasNoPrefix ? app : builder;
-            instance?.MapGroup(targetBuilder);
+            instance.MapGroup(targetBuilder);
         }
 
         return app;

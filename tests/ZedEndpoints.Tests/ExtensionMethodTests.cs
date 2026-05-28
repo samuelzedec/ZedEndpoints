@@ -19,8 +19,8 @@ public sealed class ExtensionMethodTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
 
         await app.StartAsync();
 
@@ -65,7 +65,7 @@ public sealed class ExtensionMethodTests
 
         // Act
         var result = app
-            .MapEndpointGroups(Assembly.GetExecutingAssembly())
+            .MapEndpointGroups(assembly: Assembly.GetExecutingAssembly())
             .MapEndpoint<TestEndpoint>();
 
         // Assert
@@ -82,7 +82,7 @@ public sealed class ExtensionMethodTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly(), "api/v1");
+        app.MapEndpointGroups("api/v1", Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -112,7 +112,7 @@ public sealed class ExtensionMethodTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups(assembly: Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -140,8 +140,8 @@ public sealed class ExtensionMethodTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly(), "api/v1");
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly(), "api/v1");
+        app.MapEndpointGroups("api/v1", Assembly.GetExecutingAssembly());
+        app.MapEndpointGroups("api/v1", Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -170,7 +170,7 @@ public sealed class ExtensionMethodTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly(), "api/v1");
+        app.MapEndpointGroups("api/v1", Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
@@ -203,7 +203,7 @@ public sealed class ExtensionMethodTests
         var app = builder.Build();
 
         // Act
-        app.MapEndpointGroups(Assembly.GetExecutingAssembly(), "api/v1");
+        app.MapEndpointGroups("api/v1", Assembly.GetExecutingAssembly());
         await app.StartAsync();
 
         try
