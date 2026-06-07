@@ -14,6 +14,10 @@ public static class WebApplicationExtensions
 {
     private static readonly ConditionalWeakTable<WebApplication, HashSet<Assembly>> ProcessedAssembliesPerApp = new();
 
+    private static readonly MethodInfo MapEndpointMethod =
+        typeof(EndpointRouteBuilderExtensions)
+            .GetMethod(nameof(EndpointRouteBuilderExtensions.MapEndpoint), BindingFlags.Public | BindingFlags.Static)!;
+
     /// <summary>
     /// Automatically discovers and registers all endpoint groups in the application.
     /// </summary>
@@ -75,17 +79,38 @@ public static class WebApplicationExtensions
             ? app.MapGroup(globalPrefix)
             : app;
 
-        foreach (var groupType in groupTypes)
+        EndpointBuilderContext.RootBuilder.Value = app;
+        EndpointBuilderContext.RegisteredEndpoints.Value = [];
+        try
         {
-            var instance = Activator.CreateInstance(groupType) as IEndpointGroup
-                ?? throw new InvalidOperationException(
-                    $"Could not create an instance of '{groupType.Name}'. " +
-                    $"Ensure it has a public parameterless constructor.");
+            foreach (var groupType in groupTypes)
+            {
+                var instance = Activator.CreateInstance(groupType) as IEndpointGroup
+                    ?? throw new InvalidOperationException(
+                        $"Could not create an instance of '{groupType.Name}'. " +
+                        $"Ensure it has a public parameterless constructor.");
 
-            var hasNoPrefix = groupType.IsDefined(typeof(NoGlobalPrefixAttribute), inherit: false);
+                var hasNoPrefix = groupType.IsDefined(typeof(NoGlobalPrefixAttribute), inherit: false);
 
-            var targetBuilder = hasNoPrefix ? app : builder;
-            instance.MapGroup(targetBuilder);
+                var targetBuilder = hasNoPrefix ? app : builder;
+                instance.MapGroup(targetBuilder);
+            }
+
+            var registeredSet = EndpointBuilderContext.RegisteredEndpoints.Value;
+            var standaloneEndpoints = assembly
+                .GetTypes()
+                .Where(t => t is { IsClass: true, IsAbstract: false }
+                         && t.IsAssignableTo(typeof(IEndpoint))
+                         && !t.IsAssignableTo(typeof(IEndpointGroup))
+                         && !registeredSet.Contains(t));
+
+            foreach (var endpointType in standaloneEndpoints)
+                MapEndpointMethod.MakeGenericMethod(endpointType).Invoke(null, [builder]);
+        }
+        finally
+        {
+            EndpointBuilderContext.RootBuilder.Value = null;
+            EndpointBuilderContext.RegisteredEndpoints.Value = null;
         }
 
         return app;

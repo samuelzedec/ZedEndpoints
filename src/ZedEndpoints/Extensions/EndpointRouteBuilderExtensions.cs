@@ -1,5 +1,7 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Routing;
 using ZedEndpoints.Abstractions;
+using ZedEndpoints.Attributes;
 
 namespace ZedEndpoints.Extensions;
 
@@ -37,7 +39,13 @@ public static class EndpointRouteBuilderExtensions
     public static IEndpointRouteBuilder MapEndpoint<TEndpoint>(this IEndpointRouteBuilder app)
         where TEndpoint : IEndpoint
     {
-        TEndpoint.Map(app);
+        var hasNoPrefix = typeof(TEndpoint).IsDefined(typeof(NoGlobalPrefixAttribute), inherit: false);
+        var targetBuilder = hasNoPrefix && EndpointBuilderContext.RootBuilder.Value is { } root
+            ? root
+            : app;
+
+        TEndpoint.Map(targetBuilder);
+        EndpointBuilderContext.RegisteredEndpoints.Value?.Add(typeof(TEndpoint));
         return app;
     }
 }
