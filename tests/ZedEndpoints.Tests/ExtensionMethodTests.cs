@@ -92,8 +92,9 @@ public sealed class ExtensionMethodTests
             var routeEndpoints = endpoints.OfType<RouteEndpoint>().ToList();
 
             routeEndpoints.Should().NotBeEmpty("endpoints should be registered with global prefix");
+            var noGlobalPrefixNames = new HashSet<string> { "HealthEndpoint", "StandaloneNoGlobalPrefixEndpoint" };
             routeEndpoints
-                .Where(e => e.Metadata.OfType<IEndpointNameMetadata>().All(m => m.EndpointName != "HealthEndpoint"))
+                .Where(e => e.Metadata.OfType<IEndpointNameMetadata>().All(m => !noGlobalPrefixNames.Contains(m.EndpointName)))
                 .Should().AllSatisfy(e =>
                     e.RoutePattern.RawText.Should().StartWith("api/v1",
                         "all routes without [NoGlobalPrefix] should be prefixed with the global prefix"));
