@@ -27,8 +27,9 @@ file sealed class CreateUserEndpoint : IEndpoint { ... }
 
 - Automatic endpoint discovery via reflection
 - Group-based endpoint organization with shared configuration
-- Optional global route prefix for all endpoint groups
-- Per-group prefix override via `[NoGlobalPrefix]` attribute
+- Standalone endpoint discovery — register `IEndpoint` implementations without an `IEndpointGroup`
+- Optional global route prefix for all endpoint groups and standalone endpoints
+- Per-group/per-endpoint prefix override via `[NoGlobalPrefix]` attribute
 - Type-safe interfaces and generics
 - Fluent API with method chaining support
 - Idempotent operations (safe to call multiple times)
@@ -116,6 +117,22 @@ var apiV1 = app.MapGroup("/api/v1");
 apiV1.MapEndpoint<GetProductEndpoint>();
 ```
 
+### Standalone Endpoints (Without a Group)
+Any class implementing `IEndpoint` that is not registered through an `IEndpointGroup` is automatically discovered and registered by `MapEndpointGroups`. No group is required:
+```csharp
+// No IEndpointGroup needed — discovered automatically
+public class HealthCheckEndpoint : IEndpoint
+{
+    public static void Map(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/health", () => Results.Ok())
+            .WithName("HealthCheck");
+    }
+}
+```
+
+Endpoints already registered through a group are tracked and skipped during standalone discovery, so there is no risk of double registration.
+
 ### Scanning Specific Assembly
 ```csharp
 app.MapEndpointGroups(typeof(ProductEndpoints).Assembly);
@@ -134,10 +151,11 @@ app.MapEndpointGroups(typeof(ProductEndpoints).Assembly, globalPrefix: "api/v1")
 This is useful for applying a consistent API versioning prefix without modifying each group individually. For example, a group that maps `/products` will automatically become `/api/v1/products`.
 
 ### Opting Out of the Global Prefix
-Use the `[NoGlobalPrefix]` attribute on a group to bypass the global prefix:
+Use the `[NoGlobalPrefix]` attribute on a group or standalone endpoint to bypass the global prefix:
 ```csharp
 using ZedEndpoints.Attributes;
 
+// On a group
 [NoGlobalPrefix]
 public class HealthEndpoints : IEndpointGroup
 {
@@ -147,9 +165,20 @@ public class HealthEndpoints : IEndpointGroup
             .WithName("HealthCheck");
     }
 }
+
+// On a standalone endpoint
+[NoGlobalPrefix]
+public class ReadinessEndpoint : IEndpoint
+{
+    public static void Map(IEndpointRouteBuilder app)
+    {
+        app.MapGet("/ready", () => Results.Ok())
+            .WithName("Readiness");
+    }
+}
 ```
 
-With a global prefix of `api/v1`, all other groups will be prefixed normally while `HealthEndpoints` will remain at `/health`.
+With a global prefix of `api/v1`, all other groups and standalone endpoints will be prefixed normally while the ones decorated with `[NoGlobalPrefix]` will remain at their original routes.
 
 ## Architecture
 
@@ -185,17 +214,19 @@ public sealed class NoGlobalPrefixAttribute : Attribute;
 
 ### Endpoint Organization
 
-Organize endpoints by feature or domain area:
+Organize endpoints by feature or domain area. Use groups for related endpoints that share configuration (auth, tags, rate limiting), and standalone endpoints for isolated cases like health checks or webhooks:
 ```
 Features/
 ├── Products/
 │   ├── GetProduct.cs
 │   ├── CreateProduct.cs
-│   └── ProductEndpoints.cs
+│   └── ProductEndpoints.cs      ← IEndpointGroup with shared auth/tags
 ├── Orders/
 │   ├── GetOrder.cs
 │   ├── CreateOrder.cs
-│   └── OrderEndpoints.cs
+│   └── OrderEndpoints.cs        ← IEndpointGroup with shared auth/tags
+├── HealthCheck.cs               ← standalone IEndpoint, no group needed
+└── Readiness.cs                 ← standalone IEndpoint, no group needed
 ```
 
 ### Naming Conventions
@@ -251,6 +282,8 @@ The `MapEndpointGroups()` extension method:
 3. Creates instances using parameterless constructors
 4. Checks for the `[NoGlobalPrefix]` attribute on each group
 5. Invokes their `MapGroup()` methods with the appropriate route builder
+6. Finds all concrete classes implementing `IEndpoint` that were not already registered through a group
+7. Registers each standalone endpoint directly, respecting `[NoGlobalPrefix]` if present
 
 ### Global Prefix
 
